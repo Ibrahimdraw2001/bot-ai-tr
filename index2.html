@@ -1,0 +1,3487 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IHD WALLET </title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <style>
+        /* ========== CSS Variables ========== */
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #7209b7;
+            --success: #2ecc71;
+            --success-dark: #27ae60;
+            --danger: #e74c3c;
+            --danger-dark: #c0392b;
+            --warning: #f39c12;
+            --warning-dark: #e67e22;
+            --info: #3498db;
+            --info-dark: #2980b9;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+            --white: #ffffff;
+            --gray: #95a5a6;
+            --border: #dfe6e9;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.15);
+            --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.2);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --radius-lg: 24px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ========== Reset & Base Styles ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            font-size: 16px;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            min-height: 100vh;
+            color: var(--dark);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* ========== Typography ========== */
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        /* ========== Loading Screen ========== */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: var(--transition-slow);
+        }
+
+        .loading-content {
+            text-align: center;
+            animation: fadeIn 0.8s ease;
+        }
+
+        .loader {
+            width: 80px;
+            height: 80px;
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top: 4px solid var(--white);
+            border-radius: 50%;
+            animation: spin 1.2s linear infinite;
+            margin-bottom: 25px;
+        }
+
+        .loading-text {
+            color: var(--white);
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .loading-subtext {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.95rem;
+        }
+
+        /* ========== Animations ========== */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slideInLeft {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* ========== Auth Page ========== */
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 30px 30px;
+            opacity: 0.3;
+            animation: backgroundMove 20s linear infinite;
+        }
+
+        @keyframes backgroundMove {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 480px;
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-xl);
+            animation: slideInRight 0.8s ease;
+            position: relative;
+            z-index: 1;
+        }
+
+        .auth-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            padding: 40px 30px;
+            text-align: center;
+            color: var(--white);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-header::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            opacity: 0.3;
+        }
+
+        .auth-header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .auth-header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .auth-tabs {
+            display: flex;
+            background: var(--light);
+            position: relative;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 22px;
+            background: none;
+            border: none;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--gray);
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .auth-tab.active {
+            color: var(--primary);
+        }
+
+        .auth-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            animation: slideInLeft 0.3s ease;
+        }
+
+        .auth-content {
+            padding: 40px;
+        }
+
+        .auth-form {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .auth-form.active {
+            display: block;
+        }
+
+        /* ========== Forms ========== */
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            color: var(--dark);
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .form-label i {
+            color: var(--primary);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 1rem;
+            transition: var(--transition);
+            background: var(--white);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .form-control::placeholder {
+            color: var(--gray);
+        }
+
+        .form-text {
+            display: block;
+            margin-top: 8px;
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .input-with-icon {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
+
+        .input-with-icon .form-control {
+            padding-right: 20px;
+            padding-left: 50px;
+        }
+
+        /* ========== Buttons ========== */
+        .btn {
+            padding: 17px 30px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 1rem;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            cursor: pointer;
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow);
+        }
+
+        .btn:active {
+            transform: translateY(-1px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--white);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), var(--success-dark));
+            color: var(--white);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger), var(--danger-dark));
+            color: var(--white);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, var(--warning), var(--warning-dark));
+            color: var(--white);
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, var(--info), var(--info-dark));
+            color: var(--white);
+        }
+
+        .btn-light {
+            background: var(--white);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .btn-block {
+            width: 100%;
+        }
+
+        .btn-sm {
+            padding: 10px 20px;
+            font-size: 0.9rem;
+        }
+
+        .btn-lg {
+            padding: 20px 40px;
+            font-size: 1.1rem;
+        }
+
+        .btn-icon {
+            width: 48px;
+            height: 48px;
+            padding: 0;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ========== App Container ========== */
+        .app-container {
+            display: none;
+            min-height: 100vh;
+            background: var(--light);
+        }
+
+        /* ========== App Header ========== */
+        .app-header {
+            background: var(--white);
+            padding: 0 25px;
+            box-shadow: var(--shadow);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--dark);
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .menu-toggle:hover {
+            background: var(--light);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-size: 1.3rem;
+            animation: pulse 2s infinite;
+        }
+
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo-text h1 {
+            font-size: 1.3rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-text span {
+            font-size: 0.85rem;
+            color: var(--gray);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .notification-wrapper {
+            position: relative;
+        }
+
+        .notification-btn {
+            background: none;
+            border: none;
+            font-size: 1.4rem;
+            color: var(--dark);
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: var(--transition);
+        }
+
+        .notification-btn:hover {
+            background: var(--light);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: linear-gradient(135deg, var(--danger), var(--danger-dark));
+            color: var(--white);
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            font-size: 0.7rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: bounce 1s infinite;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 8px 15px;
+            border-radius: var(--radius-sm);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .user-menu:hover {
+            background: var(--light);
+        }
+
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-weight: 600;
+            font-size: 1.2rem;
+            border: 3px solid var(--white);
+            box-shadow: var(--shadow);
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .user-email {
+            font-size: 0.85rem;
+            color: var(--gray);
+        }
+
+        /* ========== Sidebar ========== */
+        .app-sidebar {
+            position: fixed;
+            top: 70px;
+            right: 0;
+            width: 280px;
+            height: calc(100vh - 70px);
+            background: var(--white);
+            box-shadow: var(--shadow);
+            padding: 25px;
+            overflow-y: auto;
+            transition: var(--transition);
+            z-index: 999;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            margin-bottom: 40px;
+        }
+
+        .menu-item {
+            margin-bottom: 8px;
+        }
+
+        .menu-link {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 16px 20px;
+            border-radius: var(--radius-sm);
+            color: var(--dark);
+            text-decoration: none;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .menu-link i {
+            width: 24px;
+            font-size: 1.2rem;
+            color: var(--gray);
+            transition: var(--transition);
+        }
+
+        .menu-link:hover,
+        .menu-link.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--white);
+            transform: translateX(-10px);
+            box-shadow: var(--shadow);
+        }
+
+        .menu-link:hover i,
+        .menu-link.active i {
+            color: var(--white);
+        }
+
+        .sidebar-stats {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: var(--radius);
+            padding: 25px;
+            color: var(--white);
+            margin-bottom: 25px;
+        }
+
+        .sidebar-stats h4 {
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        /* ========== Main Content ========== */
+        .app-main {
+            margin-top: 70px;
+            margin-right: 280px;
+            padding: 30px;
+            transition: var(--transition);
+        }
+
+        .page {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .page-header {
+            margin-bottom: 30px;
+        }
+
+        .page-header h2 {
+            font-size: 1.8rem;
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+
+        .page-header p {
+            color: var(--gray);
+            font-size: 1.1rem;
+        }
+
+        /* ========== Dashboard ========== */
+        .welcome-card {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: var(--radius);
+            padding: 30px;
+            color: var(--white);
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .welcome-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            opacity: 0.3;
+        }
+
+        .welcome-content h3 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .welcome-content p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .balance-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .balance-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            border: 2px solid transparent;
+        }
+
+        .balance-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary);
+        }
+
+        .balance-card.premium {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: var(--white);
+        }
+
+        .balance-card.premium .balance-amount {
+            color: var(--white);
+        }
+
+        .balance-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .balance-header h3 {
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .balance-amount {
+            font-size: 3.2rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .balance-currency {
+            font-size: 2rem;
+            margin-right: 10px;
+        }
+
+        .currency-selector {
+            background: var(--light);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px 15px;
+            font-weight: 600;
+            color: var(--dark);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .currency-selector:hover {
+            border-color: var(--primary);
+        }
+
+        .balance-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .balance-stat {
+            background: var(--light);
+            padding: 15px;
+            border-radius: var(--radius-sm);
+        }
+
+        .balance-stat small {
+            display: block;
+            color: var(--gray);
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .balance-stat .stat-value {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--dark);
+        }
+
+        /* ========== Quick Actions ========== */
+        .quick-actions {
+            background: var(--white);
+            border-radius: var(--radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+        }
+
+        .quick-actions h3 {
+            margin-bottom: 25px;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+        }
+
+        .action-card {
+            background: var(--white);
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            text-decoration: none;
+            color: var(--dark);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .action-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--primary);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .action-card i {
+            font-size: 2.5rem;
+            transition: var(--transition);
+        }
+
+        .action-card.deposit i { color: var(--success); }
+        .action-card.withdraw i { color: var(--danger); }
+        .action-card.transfer i { color: var(--primary); }
+        .action-card.request i { color: var(--warning); }
+        .action-card.qr i { color: var(--info); }
+        .action-card.bills i { color: var(--secondary); }
+
+        .action-card span {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        /* ========== Transactions ========== */
+        .transactions-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .transactions-list {
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 2px solid var(--border);
+            transition: var(--transition);
+            border-radius: var(--radius-sm);
+            margin-bottom: 10px;
+        }
+
+        .transaction-item:hover {
+            background: var(--light);
+            transform: translateX(-5px);
+        }
+
+        .transaction-item:last-child {
+            border-bottom: none;
+        }
+
+        .transaction-info {
+            flex: 1;
+        }
+
+        .transaction-type {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .type-deposit {
+            background: rgba(46, 204, 113, 0.15);
+            color: var(--success);
+        }
+
+        .type-withdraw {
+            background: rgba(231, 76, 60, 0.15);
+            color: var(--danger);
+        }
+
+        .type-transfer {
+            background: rgba(52, 152, 219, 0.15);
+            color: var(--info);
+        }
+
+        .type-request {
+            background: rgba(243, 156, 18, 0.15);
+            color: var(--warning);
+        }
+
+        .transaction-details {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .transaction-description {
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .transaction-meta {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .transaction-meta i {
+            margin-left: 5px;
+        }
+
+        .transaction-amount {
+            font-size: 1.3rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .amount-positive {
+            color: var(--success);
+        }
+
+        .amount-negative {
+            color: var(--danger);
+        }
+
+        /* ========== Transfer Page ========== */
+        .transfer-container {
+            background: var(--white);
+            border-radius: var(--radius);
+            padding: 40px;
+            box-shadow: var(--shadow);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .transfer-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .transfer-header h2 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: var(--dark);
+        }
+
+        .transfer-header p {
+            color: var(--gray);
+            font-size: 1.1rem;
+        }
+
+        .user-id-display {
+            background: var(--light);
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .user-id-display h4 {
+            margin-bottom: 10px;
+            color: var(--dark);
+        }
+
+        .user-id {
+            font-family: monospace;
+            font-size: 1.2rem;
+            background: var(--white);
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            margin: 15px 0;
+            word-break: break-all;
+        }
+
+        .copy-id-btn {
+            margin-top: 10px;
+        }
+
+        .qr-code-container {
+            text-align: center;
+            margin: 30px 0;
+            padding: 25px;
+            background: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        .qr-placeholder {
+            width: 200px;
+            height: 200px;
+            background: var(--light);
+            border-radius: var(--radius);
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray);
+            font-size: 4rem;
+        }
+
+        /* ========== Contacts Page ========== */
+        .contacts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .contact-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            border: 2px solid transparent;
+        }
+
+        .contact-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary);
+        }
+
+        .contact-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .contact-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-weight: 600;
+            font-size: 1.5rem;
+        }
+
+        .contact-info h4 {
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+
+        .contact-info p {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .contact-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        /* ========== Notifications ========== */
+        .notifications-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .notification-item {
+            background: var(--white);
+            border-radius: var(--radius);
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            transition: var(--transition);
+            border-right: 4px solid transparent;
+        }
+
+        .notification-item:hover {
+            transform: translateX(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .notification-item.unread {
+            border-right-color: var(--primary);
+            background: linear-gradient(to left, rgba(67, 97, 238, 0.05), transparent);
+        }
+
+        .notification-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .notification-icon.success {
+            background: rgba(46, 204, 113, 0.15);
+            color: var(--success);
+        }
+
+        .notification-icon.info {
+            background: rgba(52, 152, 219, 0.15);
+            color: var(--info);
+        }
+
+        .notification-icon.warning {
+            background: rgba(243, 156, 18, 0.15);
+            color: var(--warning);
+        }
+
+        .notification-icon.danger {
+            background: rgba(231, 76, 60, 0.15);
+            color: var(--danger);
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--dark);
+        }
+
+        .notification-message {
+            color: var(--gray);
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        .notification-time {
+            font-size: 0.85rem;
+            color: var(--gray);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* ========== Modals ========== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-content {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: 40px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-xl);
+            animation: modalSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        @keyframes modalSlideUp {
+            from { transform: translateY(60px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .modal-title {
+            font-size: 1.6rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            color: var(--gray);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .modal-close:hover {
+            background: var(--light);
+            color: var(--danger);
+        }
+
+        .modal-footer {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+        }
+
+        /* ========== Toasts ========== */
+        .toast-container {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .toast {
+            background: var(--white);
+            border-radius: var(--radius);
+            padding: 20px;
+            min-width: 320px;
+            max-width: 400px;
+            box-shadow: var(--shadow-xl);
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-right: 4px solid var(--primary);
+            transform-origin: right bottom;
+        }
+
+        .toast.success {
+            border-right-color: var(--success);
+        }
+
+        .toast.error {
+            border-right-color: var(--danger);
+        }
+
+        .toast.warning {
+            border-right-color: var(--warning);
+        }
+
+        .toast.info {
+            border-right-color: var(--info);
+        }
+
+        .toast-icon {
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+
+        .toast.success .toast-icon { color: var(--success); }
+        .toast.error .toast-icon { color: var(--danger); }
+        .toast.warning .toast-icon { color: var(--warning); }
+        .toast.info .toast-icon { color: var(--info); }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--dark);
+        }
+
+        .toast-message {
+            color: var(--gray);
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: var(--gray);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 5px;
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+
+        .toast-close:hover {
+            color: var(--danger);
+        }
+
+        /* ========== Responsive Design ========== */
+        @media (max-width: 1200px) {
+            .app-main {
+                margin-right: 0;
+                padding: 25px;
+            }
+            
+            .app-sidebar {
+                transform: translateX(100%);
+                width: 320px;
+                box-shadow: var(--shadow-xl);
+            }
+            
+            .app-sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .menu-toggle {
+                display: flex;
+            }
+        }
+
+        @media (max-width: 992px) {
+            html {
+                font-size: 15px;
+            }
+            
+            .balance-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .actions-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .auth-card {
+                max-width: 100%;
+            }
+            
+            .transfer-container {
+                padding: 30px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            html {
+                font-size: 14px;
+            }
+            
+            .app-header {
+                padding: 0 15px;
+                height: 60px;
+            }
+            
+            .app-main {
+                padding: 20px 15px;
+                margin-top: 60px;
+            }
+            
+            .balance-amount {
+                font-size: 2.5rem;
+            }
+            
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .auth-content {
+                padding: 30px;
+            }
+            
+            .modal-content {
+                padding: 25px;
+            }
+            
+            .user-menu {
+                padding: 5px 10px;
+            }
+            
+            .user-info {
+                display: none;
+            }
+            
+            .toast {
+                min-width: 280px;
+                max-width: 320px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .balance-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .transaction-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .transaction-amount {
+                align-self: flex-end;
+            }
+            
+            .auth-tab {
+                padding: 18px;
+                font-size: 1rem;
+            }
+            
+            .btn {
+                padding: 15px 20px;
+            }
+            
+            .modal-content {
+                padding: 20px;
+            }
+        }
+
+        /* ========== Dark Mode Support ========== */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --dark: #ecf0f1;
+                --light: #2c3e50;
+                --white: #34495e;
+                --border: #4a6278;
+                --gray: #95a5a6;
+            }
+            
+            body {
+                background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            }
+            
+            .auth-card,
+            .app-header,
+            .app-sidebar,
+            .balance-card,
+            .quick-actions,
+            .transactions-card,
+            .transfer-container,
+            .contact-card,
+            .notification-item,
+            .modal-content,
+            .toast {
+                background: #2c3e50;
+                color: #ecf0f1;
+            }
+            
+            .form-control {
+                background: #34495e;
+                border-color: #4a6278;
+                color: #ecf0f1;
+            }
+            
+            .form-label {
+                color: #ecf0f1;
+            }
+            
+            .action-card {
+                background: #34495e;
+                color: #ecf0f1;
+                border-color: #4a6278;
+            }
+            
+            .balance-stat {
+                background: #34495e;
+            }
+            
+            .balance-stat .stat-value {
+                color: #ecf0f1;
+            }
+        }
+
+        /* ========== Custom Scrollbar ========== */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--light);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, var(--primary-dark), var(--secondary));
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-content">
+            <div class="loader"></div>
+            <div class="loading-text">جاري تحميل المحفظة...</div>
+            <div class="loading-subtext">إعداد النظام الآمن</div>
+        </div>
+    </div>
+
+    <!-- Auth Page -->
+    <div class="auth-container" id="authPage">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1><i class="fas fa-wallet"></i> IHD Wallet</h1>
+                <p>نظام الدفع والتحويل الفوري الآمن</p>
+            </div>
+            
+            <div class="auth-tabs">
+                <button class="auth-tab active" id="loginTab">تسجيل الدخول</button>
+                <button class="auth-tab" id="registerTab">إنشاء حساب</button>
+            </div>
+            
+            <div class="auth-content">
+                <form class="auth-form active" id="loginForm">
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-envelope"></i> البريد الإلكتروني</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-envelope input-icon"></i>
+                            <input type="email" class="form-control" id="loginEmail" required placeholder="example@email.com">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-lock"></i> كلمة المرور</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" class="form-control" id="loginPassword" required placeholder="••••••••">
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <i class="fas fa-sign-in-alt"></i> تسجيل الدخول
+                    </button>
+                </form>
+                
+                <form class="auth-form" id="registerForm">
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-user"></i> الاسم الكامل</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-user input-icon"></i>
+                            <input type="text" class="form-control" id="registerName" required placeholder="أحمد محمد">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-envelope"></i> البريد الإلكتروني</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-envelope input-icon"></i>
+                            <input type="email" class="form-control" id="registerEmail" required placeholder="example@email.com">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-lock"></i> كلمة المرور</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" class="form-control" id="registerPassword" required placeholder="••••••••">
+                        </div>
+                        <span class="form-text">يجب أن تكون كلمة المرور 8 أحرف على الأقل</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-phone"></i> رقم الهاتف (اختياري)</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-phone input-icon"></i>
+                            <input type="tel" class="form-control" id="registerPhone" placeholder="+966 50 123 4567">
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success btn-block">
+                        <i class="fas fa-user-plus"></i> إنشاء حساب جديد
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div class="app-container" id="appContainer">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <div class="logo-text">
+                        <h1>IHD Wallet</h1>
+                        <span>نظام الدفع الآمن</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <div class="notification-wrapper">
+                    <button class="notification-btn" id="notificationBtn">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge" id="notificationBadge">0</span>
+                    </button>
+                </div>
+                
+                <div class="user-menu" id="userMenu">
+                    <div class="user-avatar" id="userAvatar">م</div>
+                    <div class="user-info">
+                        <div class="user-name" id="userName">مستخدم</div>
+                        <div class="user-email" id="userEmail">user@example.com</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Sidebar -->
+        <aside class="app-sidebar" id="sidebar">
+            <nav>
+                <ul class="sidebar-menu">
+                    <li class="menu-item">
+                        <a href="#" class="menu-link active" data-page="dashboard">
+                            <i class="fas fa-home"></i>
+                            <span>الرئيسية</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="#" class="menu-link" data-page="transfer">
+                            <i class="fas fa-exchange-alt"></i>
+                            <span>تحويل الأموال</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="#" class="menu-link" data-page="contacts">
+                            <i class="fas fa-users"></i>
+                            <span>جهات الاتصال</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="#" class="menu-link" data-page="transactions">
+                            <i class="fas fa-history"></i>
+                            <span>سجل المعاملات</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="#" class="menu-link" data-page="notifications">
+                            <i class="fas fa-bell"></i>
+                            <span>الإشعارات</span>
+                            <span class="notification-badge" style="margin-right: auto;">0</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="#" class="menu-link" data-page="reports">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>التقارير</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="#" class="menu-link" data-page="settings">
+                            <i class="fas fa-cog"></i>
+                            <span>الإعدادات</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="sidebar-stats">
+                <h4>الإحصائيات</h4>
+                <div class="stat-item">
+                    <span class="stat-label">الإيداعات</span>
+                    <span class="stat-value" id="sidebarDeposits">0.00 $</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">السحوبات</span>
+                    <span class="stat-value" id="sidebarWithdrawals">0.00 $</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">التحويلات</span>
+                    <span class="stat-value" id="sidebarTransfers">0.00 $</span>
+                </div>
+            </div>
+            
+            <button class="btn btn-danger btn-block" id="logoutBtn">
+                <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+            </button>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="app-main" id="mainContent">
+            <!-- Dashboard Page -->
+            <div class="page active" id="dashboardPage">
+                <div class="page-header">
+                    <h2>مرحباً، <span id="greetingName">مستخدم</span>! 👋</h2>
+                    <p>إدارة محفظتك الإلكترونية بسهولة وأمان</p>
+                </div>
+                
+                <!-- Welcome Card -->
+                <div class="welcome-card">
+                    <div class="welcome-content">
+                        <h3>محفظتك الإلكترونية الآمنة</h3>
+                        <p>أموالك في أمان مع نظام التشفير المتقدم والتحويل الفوري</p>
+                    </div>
+                </div>
+
+                <!-- Balance Section -->
+                <div class="balance-section">
+                    <div class="balance-card">
+                        <div class="balance-header">
+                            <h3><i class="fas fa-wallet"></i> الرصيد الرئيسي</h3>
+                            <select class="currency-selector" id="currencySelector">
+                                <option value="USD">$ الدولار الأمريكي</option>
+                                <option value="KWD">د.ك الدينار الكويتي</option>
+                                <option value="SAR">ر.س الريال السعودي</option>
+                                <option value="EUR">€ اليورو</option>
+                            </select>
+                        </div>
+                        <div class="balance-amount">
+                            <span id="currentBalance">0.00</span>
+                            <span class="balance-currency" id="currentCurrency">$</span>
+                        </div>
+                        <div class="balance-stats">
+                            <div class="balance-stat">
+                                <small>الإيداعات اليوم</small>
+                                <div class="stat-value" id="todayDeposits">0.00</div>
+                            </div>
+                            <div class="balance-stat">
+                                <small>السحوبات اليوم</small>
+                                <div class="stat-value" id="todayWithdrawals">0.00</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="balance-card premium">
+                        <div class="balance-header">
+                            <h3><i class="fas fa-star"></i> الرصيد المميز</h3>
+                        </div>
+                        <div class="balance-amount">0.00 $</div>
+                        <p style="opacity: 0.9; margin-top: 15px;">احصل على مزايا إضافية مع الرصيد المميز</p>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <h3><i class="fas fa-bolt"></i> إجراءات سريعة</h3>
+                    <div class="actions-grid">
+                        <a href="#" class="action-card deposit" data-action="deposit">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>إيداع أموال</span>
+                        </a>
+                        <a href="#" class="action-card withdraw" data-action="withdraw">
+                            <i class="fas fa-minus-circle"></i>
+                            <span>سحب أموال</span>
+                        </a>
+                        <a href="#" class="action-card transfer" data-action="transfer">
+                            <i class="fas fa-paper-plane"></i>
+                            <span>تحويل أموال</span>
+                        </a>
+                        <a href="#" class="action-card request" data-action="request">
+                            <i class="fas fa-hand-holding-usd"></i>
+                            <span>طلب مال</span>
+                        </a>
+                        <a href="#" class="action-card qr" data-action="qr">
+                            <i class="fas fa-qrcode"></i>
+                            <span>كود الدفع</span>
+                        </a>
+                        <a href="#" class="action-card bills" data-action="bills">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                            <span>دفع فواتير</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Recent Transactions -->
+                <div class="transactions-card">
+                    <div class="section-header">
+                        <h3 class="section-title"><i class="fas fa-exchange-alt"></i> آخر المعاملات</h3>
+                        <a href="#" class="btn btn-light btn-sm" data-page="transactions">عرض الكل</a>
+                    </div>
+                    <div class="transactions-list" id="recentTransactions">
+                        <!-- Dynamic Content -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transfer Page -->
+            <div class="page" id="transferPage">
+                <div class="page-header">
+                    <h2><i class="fas fa-exchange-alt"></i> تحويل الأموال</h2>
+                    <p>تحويل فوري باستخدام معرف المستخدم أو كود QR</p>
+                </div>
+                
+                <!-- User ID Display -->
+                <div class="user-id-display">
+                    <h4><i class="fas fa-id-card"></i> معرفك الخاص</h4>
+                    <p>شارك هذا المعرف لاستقبال التحويلات</p>
+                    <div class="user-id" id="userID">جاري التحميل...</div>
+                    <button class="btn btn-primary btn-sm copy-id-btn" id="copyUserIdBtn">
+                        <i class="fas fa-copy"></i> نسخ المعرف
+                    </button>
+                </div>
+
+                <!-- QR Code -->
+                <div class="qr-code-container">
+                    <h4><i class="fas fa-qrcode"></i> كود الدفع السريع</h4>
+                    <div class="qr-placeholder">
+                        <i class="fas fa-qrcode"></i>
+                    </div>
+                    <p>امسح هذا الكود لتحويل الأموال إليك بسرعة</p>
+                </div>
+
+                <!-- Transfer Form -->
+                <div class="transfer-container">
+                    <div class="transfer-header">
+                        <h2>إرسال تحويل</h2>
+                        <p>أدخل معرف المستلم لإرسال التحويل</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-id-card"></i> معرف المستلم</label>
+                        <input type="text" class="form-control" id="receiverId" placeholder="أدخل معرف المستلم">
+                        <span class="form-text">يمكنك استخدام معرف المستخدم أو مسح كود QR</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-money-bill-wave"></i> المبلغ ($)</label>
+                        <input type="number" class="form-control" id="transferAmount" min="0.01" step="0.01" placeholder="0.00">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-comment"></i> الرسالة (اختياري)</label>
+                        <input type="text" class="form-control" id="transferMessage" placeholder="رسالة مع التحويل">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-lock"></i> كلمة المرور للتأكيد</label>
+                        <input type="password" class="form-control" id="transferPassword" placeholder="••••••••">
+                    </div>
+                    
+                    <button class="btn btn-primary btn-block" id="sendTransferBtn">
+                        <i class="fas fa-paper-plane"></i> إرسال التحويل
+                    </button>
+                </div>
+            </div>
+
+            <!-- Contacts Page -->
+            <div class="page" id="contactsPage">
+                <div class="page-header">
+                    <h2><i class="fas fa-users"></i> جهات الاتصال</h2>
+                    <p>إدارة جهات الاتصال الخاصة بك</p>
+                </div>
+                
+                <div class="contacts-container" id="contactsList">
+                    <!-- Dynamic Content -->
+                </div>
+                
+                <div class="transactions-card" style="margin-top: 30px;">
+                    <div class="section-header">
+                        <h3 class="section-title"><i class="fas fa-user-plus"></i> إضافة جهة اتصال جديدة</h3>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">معرف المستخدم</label>
+                        <input type="text" class="form-control" id="newContactId" placeholder="أدخل معرف المستخدم">
+                    </div>
+                    <button class="btn btn-success" id="addContactBtn">
+                        <i class="fas fa-user-plus"></i> إضافة جهة اتصال
+                    </button>
+                </div>
+            </div>
+
+            <!-- Transactions Page -->
+            <div class="page" id="transactionsPage">
+                <div class="page-header">
+                    <h2><i class="fas fa-history"></i> سجل المعاملات</h2>
+                    <p>عرض جميع معاملاتك السابقة</p>
+                </div>
+                
+                <div class="transactions-card">
+                    <div class="section-header">
+                        <h3 class="section-title">جميع المعاملات</h3>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-light btn-sm" id="filterAll">الكل</button>
+                            <button class="btn btn-success btn-sm" id="filterDeposit">الإيداعات</button>
+                            <button class="btn btn-danger btn-sm" id="filterWithdraw">السحوبات</button>
+                            <button class="btn btn-info btn-sm" id="filterTransfer">التحويلات</button>
+                        </div>
+                    </div>
+                    <div class="transactions-list" id="allTransactions">
+                        <!-- Dynamic Content -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications Page -->
+            <div class="page" id="notificationsPage">
+                <div class="page-header">
+                    <h2><i class="fas fa-bell"></i> الإشعارات</h2>
+                    <p>إدارة إشعارات النظام والتحويلات</p>
+                </div>
+                
+                <div class="notifications-container" id="notificationsList">
+                    <!-- Dynamic Content -->
+                </div>
+            </div>
+
+            <!-- Settings Page -->
+            <div class="page" id="settingsPage">
+                <div class="page-header">
+                    <h2><i class="fas fa-cog"></i> الإعدادات</h2>
+                    <p>تخصيص إعدادات حسابك</p>
+                </div>
+                
+                <div class="transactions-card">
+                    <div class="form-group">
+                        <label class="form-label">العملة الافتراضية</label>
+                        <select class="form-control" id="defaultCurrencySetting">
+                            <option value="USD">$ الدولار الأمريكي</option>
+                            <option value="KWD">د.ك الدينار الكويتي</option>
+                            <option value="SAR">ر.س الريال السعودي</option>
+                            <option value="EUR">€ اليورو</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">تغيير كلمة المرور</label>
+                        <input type="password" class="form-control" id="currentPassword" placeholder="كلمة المرور الحالية">
+                        <input type="password" class="form-control" style="margin-top: 10px;" id="newPassword" placeholder="كلمة المرور الجديدة">
+                        <input type="password" class="form-control" style="margin-top: 10px;" id="confirmPassword" placeholder="تأكيد كلمة المرور">
+                        <button class="btn btn-warning" style="margin-top: 15px; width: 100%;" id="changePasswordBtn">
+                            <i class="fas fa-key"></i> تغيير كلمة المرور
+                        </button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <h4 style="margin-bottom: 15px;">إعدادات الإشعارات</h4>
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px 0; border-bottom: 2px solid var(--border);">
+                            <span>إشعارات البريد الإلكتروني</span>
+                            <label class="switch">
+                                <input type="checkbox" id="emailNotifications" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px 0; border-bottom: 2px solid var(--border);">
+                            <span>إشعارات التحويلات</span>
+                            <label class="switch">
+                                <input type="checkbox" id="transferNotifications" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <button class="btn btn-danger" style="width: 100%;" id="deleteAccountBtn">
+                            <i class="fas fa-trash"></i> حذف الحساب
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Transaction Modal -->
+    <div class="modal-overlay" id="transactionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title"><i class="fas fa-exchange-alt"></i> <span id="modalTitle">إيداع أموال</span></h2>
+                <button class="modal-close" id="closeModal">&times;</button>
+            </div>
+            
+            <form id="transactionForm">
+                <div class="form-group">
+                    <label class="form-label">المبلغ ($)</label>
+                    <input type="number" class="form-control" id="transactionAmount" required min="0.01" step="0.01" placeholder="0.00">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">الوصف (اختياري)</label>
+                    <input type="text" class="form-control" id="transactionDescription" placeholder="وصف المعاملة">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">الفئة</label>
+                    <select class="form-control" id="transactionCategory">
+                        <option value="general">عام</option>
+                        <option value="salary">راتب</option>
+                        <option value="business">أعمال</option>
+                        <option value="investment">استثمار</option>
+                        <option value="gift">هدية</option>
+                    </select>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-check-circle"></i> تأكيد
+                    </button>
+                    <button type="button" class="btn btn-light" id="cancelTransaction">
+                        إلغاء
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- QR Scanner Modal -->
+    <div class="modal-overlay" id="qrScannerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title"><i class="fas fa-qrcode"></i> مسح كود QR</h2>
+                <button class="modal-close" id="closeQrModal">&times;</button>
+            </div>
+            
+            <div style="text-align: center; padding: 30px 0;">
+                <div class="qr-placeholder" style="width: 250px; height: 250px;">
+                    <i class="fas fa-camera"></i>
+                </div>
+                <p style="margin-top: 20px; color: var(--gray);">ضع كود QR داخل الإطار للمسح</p>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="scanQRBtn">
+                    <i class="fas fa-camera"></i> بدء المسح
+                </button>
+                <button class="btn btn-light" id="cancelQRScan">
+                    إلغاء
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <script>
+        // ========== Digital Wallet PRO Application ==========
+        class DigitalWalletPro {
+            constructor() {
+                this.currentUser = null;
+                this.userData = null;
+                this.transactions = [];
+                this.contacts = [];
+                this.notifications = [];
+                this.currencyRates = { USD: 1, KWD: 0.31, SAR: 3.75, EUR: 0.92 };
+                this.currentCurrency = 'USD';
+                this.userID = null;
+                this.init();
+            }
+
+            async init() {
+                try {
+                    console.log('🚀 Starting Digital Wallet PRO...');
+                    
+                    // إعدادات Firebase - استخدم بيانات مشروعك
+                    const firebaseConfig = {
+                        apiKey: "AIzaSyBqq_kbTdbB-JX53LN1mSdPCJ5XjEl_7UY",
+                        authDomain: "wallet-f2655.firebaseapp.com",
+                        databaseURL: "https://wallet-f2655-default-rtdb.firebaseio.com",
+                        projectId: "wallet-f2655",
+                        storageBucket: "wallet-f2655.firebasestorage.app",
+                        messagingSenderId: "499405899026",
+                        appId: "1:499405899026:web:your-app-id-here"
+                    };
+
+                    // تهيئة Firebase
+                    if (!firebase.apps.length) {
+                        firebase.initializeApp(firebaseConfig);
+                        console.log('✅ Firebase initialized');
+                    }
+
+                    this.auth = firebase.auth();
+                    this.db = firebase.database();
+                    
+                    // اختبار الاتصال
+                    await this.testConnection();
+                    
+                    // مراقبة حالة المصادقة
+                    this.setupAuthStateListener();
+                    
+                    // إعداد واجهة المستخدم
+                    this.setupUI();
+                    
+                    // إخفاء شاشة التحميل
+                    setTimeout(() => {
+                        const loadingScreen = document.getElementById('loadingScreen');
+                        if (loadingScreen) {
+                            loadingScreen.style.opacity = '0';
+                            setTimeout(() => {
+                                loadingScreen.style.display = 'none';
+                            }, 500);
+                        }
+                    }, 1500);
+
+                } catch (error) {
+                    console.error('❌ Initialization error:', error);
+                    this.showToast('خطأ في تهيئة النظام', 'error');
+                }
+            }
+
+            async testConnection() {
+                try {
+                    const testRef = this.db.ref('.info/connected');
+                    testRef.on('value', (snap) => {
+                        if (snap.val() === true) {
+                            console.log('✅ Database connected successfully');
+                        } else {
+                            console.log('❌ Database not connected');
+                        }
+                    });
+                } catch (error) {
+                    console.error('Connection test failed:', error);
+                }
+            }
+
+            setupAuthStateListener() {
+                this.auth.onAuthStateChanged(async (user) => {
+                    console.log('🔐 Auth state changed:', user ? 'User signed in' : 'No user');
+                    
+                    if (user) {
+                        this.currentUser = user;
+                        await this.loadUserData();
+                        this.showApp();
+                    } else {
+                        this.showAuth();
+                    }
+                });
+            }
+
+            setupUI() {
+                // إعداد مستمعي الأحداث
+                this.setupEventListeners();
+            }
+
+            // ========== Authentication ==========
+            async login(email, password) {
+                try {
+                    this.showToast('جاري تسجيل الدخول...', 'info');
+                    const userCredential = await this.auth.signInWithEmailAndPassword(email, password);
+                    this.showToast('تم تسجيل الدخول بنجاح', 'success');
+                    return userCredential;
+                } catch (error) {
+                    console.error('Login error:', error);
+                    this.handleAuthError(error);
+                    throw error;
+                }
+            }
+
+            async register(email, password, name, phone) {
+                try {
+                    this.showToast('جاري إنشاء الحساب...', 'info');
+                    const userCredential = await this.auth.createUserWithEmailAndPassword(email, password);
+                    
+                    // إنشاء معرف مستخدم فريد
+                    const userID = this.generateUserID();
+                    
+                    // حفظ بيانات المستخدم
+                    const userData = {
+                        name: name,
+                        email: email,
+                        phone: phone || '',
+                        userID: userID,
+                        balance: 1000,
+                        currency: 'USD',
+                        createdAt: new Date().toISOString(),
+                        status: 'active',
+                        settings: {
+                            emailNotifications: true,
+                            transferNotifications: true
+                        }
+                    };
+                    
+                    await this.db.ref('users/' + userCredential.user.uid).set(userData);
+                    
+                    this.showToast('تم إنشاء الحساب بنجاح!', 'success');
+                    return userCredential;
+                } catch (error) {
+                    console.error('Registration error:', error);
+                    this.handleAuthError(error);
+                    throw error;
+                }
+            }
+
+            generateUserID() {
+                // إنشاء معرف مستخدم فريد (8 أحرف)
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                let userID = '';
+                for (let i = 0; i < 8; i++) {
+                    userID += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                return 'WLT' + userID;
+            }
+
+            async logout() {
+                try {
+                    await this.auth.signOut();
+                    this.showToast('تم تسجيل الخروج', 'info');
+                } catch (error) {
+                    console.error('Logout error:', error);
+                    this.showToast('خطأ في تسجيل الخروج', 'error');
+                }
+            }
+
+            handleAuthError(error) {
+                let message = 'حدث خطأ غير معروف';
+                
+                const errors = {
+                    'auth/email-already-in-use': 'البريد الإلكتروني مستخدم بالفعل',
+                    'auth/invalid-email': 'البريد الإلكتروني غير صالح',
+                    'auth/weak-password': 'كلمة المرور ضعيفة جداً',
+                    'auth/user-not-found': 'المستخدم غير موجود',
+                    'auth/wrong-password': 'كلمة المرور غير صحيحة',
+                    'auth/network-request-failed': 'خطأ في الاتصال بالشبكة',
+                    'auth/too-many-requests': 'محاولات كثيرة جداً، حاول لاحقاً',
+                    'auth/invalid-login-credentials': 'بيانات الدخول غير صحيحة'
+                };
+
+                message = errors[error.code] || message;
+                this.showToast(message, 'error');
+            }
+
+            // ========== User Data Management ==========
+            async loadUserData() {
+                try {
+                    const snapshot = await this.db.ref('users/' + this.currentUser.uid).once('value');
+                    
+                    if (!snapshot.exists()) {
+                        const userID = this.generateUserID();
+                        const userData = {
+                            name: this.currentUser.email.split('@')[0],
+                            email: this.currentUser.email,
+                            userID: userID,
+                            balance: 1000,
+                            currency: 'USD',
+                            createdAt: new Date().toISOString(),
+                            status: 'active',
+                            settings: {
+                                emailNotifications: true,
+                                transferNotifications: true
+                            }
+                        };
+                        
+                        await this.db.ref('users/' + this.currentUser.uid).set(userData);
+                        this.userData = userData;
+                    } else {
+                        this.userData = snapshot.val();
+                    }
+
+                    this.userID = this.userData.userID;
+                    this.currentCurrency = this.userData.currency || 'USD';
+                    
+                    this.updateUI();
+                    await this.loadTransactions();
+                    await this.loadContacts();
+                    await this.loadNotifications();
+
+                } catch (error) {
+                    console.error('Error loading user data:', error);
+                    throw error;
+                }
+            }
+
+            updateUI() {
+                if (!this.userData) return;
+                
+                // تحديث معلومات المستخدم
+                document.getElementById('userName').textContent = this.userData.name;
+                document.getElementById('userEmail').textContent = this.userData.email;
+                document.getElementById('greetingName').textContent = this.userData.name;
+                document.getElementById('userAvatar').textContent = this.userData.name.charAt(0);
+                document.getElementById('userID').textContent = this.userData.userID;
+                
+                // تحديث الرصيد
+                this.updateBalanceDisplay();
+                
+                // تحديث العملة
+                document.getElementById('currencySelector').value = this.currentCurrency;
+                document.getElementById('defaultCurrencySetting').value = this.currentCurrency;
+                
+                // تحديث الإعدادات
+                if (this.userData.settings) {
+                    document.getElementById('emailNotifications').checked = this.userData.settings.emailNotifications || true;
+                    document.getElementById('transferNotifications').checked = this.userData.settings.transferNotifications || true;
+                }
+            }
+
+            updateBalanceDisplay() {
+                if (!this.userData) return;
+                
+                const balanceUSD = this.userData.balance || 0;
+                const convertedBalance = this.convertCurrency(balanceUSD, 'USD', this.currentCurrency);
+                
+                document.getElementById('currentBalance').textContent = convertedBalance.toFixed(2);
+                document.getElementById('currentCurrency').textContent = this.getCurrencySymbol(this.currentCurrency);
+            }
+
+            // ========== Currency Management ==========
+            convertCurrency(amount, fromCurrency, toCurrency) {
+                if (fromCurrency === toCurrency) return amount;
+                if (!this.currencyRates[fromCurrency] || !this.currencyRates[toCurrency]) return amount;
+                
+                const amountInUSD = amount / this.currencyRates[fromCurrency];
+                return amountInUSD * this.currencyRates[toCurrency];
+            }
+
+            getCurrencySymbol(currency) {
+                const symbols = { 'USD': '$', 'KWD': 'د.ك', 'SAR': 'ر.س', 'EUR': '€' };
+                return symbols[currency] || '$';
+            }
+
+            // ========== Transactions Management ==========
+            async makeTransaction(type, amount, description = '', category = 'general', receiverID = null) {
+                try {
+                    if (!this.currentUser || !this.userData) {
+                        throw new Error('يجب تسجيل الدخول أولاً');
+                    }
+
+                    const userId = this.currentUser.uid;
+                    let newBalance;
+                    let transactionData;
+
+                    if (type === 'deposit') {
+                        newBalance = this.userData.balance + amount;
+                        transactionData = {
+                            type: 'deposit',
+                            amount: amount,
+                            description: description,
+                            category: category,
+                            balanceBefore: this.userData.balance,
+                            balanceAfter: newBalance,
+                            currency: 'USD',
+                            timestamp: new Date().toISOString(),
+                            status: 'completed'
+                        };
+                        
+                    } else if (type === 'withdraw') {
+                        if (amount > this.userData.balance) {
+                            throw new Error('الرصيد غير كافي');
+                        }
+                        newBalance = this.userData.balance - amount;
+                        transactionData = {
+                            type: 'withdraw',
+                            amount: amount,
+                            description: description,
+                            category: category,
+                            balanceBefore: this.userData.balance,
+                            balanceAfter: newBalance,
+                            currency: 'USD',
+                            timestamp: new Date().toISOString(),
+                            status: 'completed'
+                        };
+                        
+                    } else if (type === 'transfer' && receiverID) {
+                        if (amount > this.userData.balance) {
+                            throw new Error('الرصيد غير كافي');
+                        }
+
+                        // البحث عن المستلم باستخدام userID
+                        const receiverSnapshot = await this.db.ref('users')
+                            .orderByChild('userID')
+                            .equalTo(receiverID)
+                            .once('value');
+
+                        if (!receiverSnapshot.exists()) {
+                            throw new Error('المستلم غير موجود');
+                        }
+
+                        const receiverData = Object.values(receiverSnapshot.val())[0];
+                        const receiverId = Object.keys(receiverSnapshot.val())[0];
+
+                        if (receiverId === userId) {
+                            throw new Error('لا يمكنك التحويل لنفسك');
+                        }
+
+                        // تحديث رصيد المرسل
+                        newBalance = this.userData.balance - amount;
+                        
+                        // تحديث رصيد المستلم
+                        const receiverNewBalance = receiverData.balance + amount;
+                        await this.db.ref('users/' + receiverId).update({
+                            balance: receiverNewBalance
+                        });
+
+                        // إنشاء معاملة للمرسل
+                        transactionData = {
+                            type: 'transfer_sent',
+                            amount: amount,
+                            description: description,
+                            receiverID: receiverID,
+                            receiverName: receiverData.name,
+                            balanceBefore: this.userData.balance,
+                            balanceAfter: newBalance,
+                            currency: 'USD',
+                            timestamp: new Date().toISOString(),
+                            status: 'completed'
+                        };
+
+                        // إنشاء إشعار للمستلم
+                        await this.createNotification(
+                            receiverId,
+                            'transfer_received',
+                            `تحويل جديد من ${this.userData.name}`,
+                            `استلمت ${amount}$ من ${this.userData.name}`,
+                            { senderID: this.userData.userID, amount: amount }
+                        );
+
+                        // إنشاء معاملة للمستلم
+                        const receiverTransaction = {
+                            type: 'transfer_received',
+                            amount: amount,
+                            description: description,
+                            senderID: this.userData.userID,
+                            senderName: this.userData.name,
+                            balanceBefore: receiverData.balance,
+                            balanceAfter: receiverNewBalance,
+                            currency: 'USD',
+                            timestamp: new Date().toISOString(),
+                            status: 'completed'
+                        };
+                        
+                        await this.db.ref('transactions/' + receiverId).push().set(receiverTransaction);
+                    }
+
+                    // تحديث رصيد المستخدم
+                    await this.db.ref('users/' + userId).update({ 
+                        balance: newBalance 
+                    });
+
+                    // حفظ المعاملة
+                    const transactionRef = this.db.ref('transactions/' + userId).push();
+                    await transactionRef.set(transactionData);
+
+                    // تحديث البيانات المحلية
+                    this.userData.balance = newBalance;
+                    this.transactions.unshift({
+                        id: transactionRef.key,
+                        ...transactionData
+                    });
+
+                    // تحديث الواجهة
+                    this.updateUI();
+                    this.updateTransactionsList();
+                    this.updateDashboardStats();
+                    
+                    this.showTransactionSuccess(type, amount);
+
+                    return transactionData;
+
+                } catch (error) {
+                    console.error('Transaction error:', error);
+                    this.showToast(error.message, 'error');
+                    throw error;
+                }
+            }
+
+            async loadTransactions() {
+                try {
+                    const snapshot = await this.db.ref('transactions/' + this.currentUser.uid)
+                        .orderByChild('timestamp')
+                        .limitToLast(20)
+                        .once('value');
+                    
+                    this.transactions = [];
+                    snapshot.forEach((childSnapshot) => {
+                        this.transactions.unshift({
+                            id: childSnapshot.key,
+                            ...childSnapshot.val()
+                        });
+                    });
+
+                    this.updateTransactionsList();
+                    this.updateDashboardStats();
+
+                } catch (error) {
+                    console.error('Error loading transactions:', error);
+                }
+            }
+
+            updateTransactionsList() {
+                const recentContainer = document.getElementById('recentTransactions');
+                const allContainer = document.getElementById('allTransactions');
+                
+                if (!recentContainer || !allContainer) return;
+                
+                // عرض آخر 5 معاملات
+                this.displayTransactions(recentContainer, this.transactions.slice(0, 5));
+                
+                // عرض جميع المعاملات
+                this.displayTransactions(allContainer, this.transactions);
+            }
+
+            displayTransactions(container, transactions) {
+                container.innerHTML = '';
+
+                if (transactions.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: #95a5a6;">
+                            <i class="fas fa-exchange-alt" style="font-size: 3rem; margin-bottom: 15px;"></i>
+                            <p>لا توجد معاملات حتى الآن</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                transactions.forEach(transaction => {
+                    const div = document.createElement('div');
+                    div.className = 'transaction-item';
+                    
+                    const typeInfo = this.getTransactionTypeInfo(transaction.type);
+                    const amountClass = transaction.type.includes('received') || transaction.type === 'deposit' 
+                        ? 'amount-positive' 
+                        : 'amount-negative';
+                    
+                    const amountSign = transaction.type.includes('received') || transaction.type === 'deposit' ? '+' : '-';
+
+                    div.innerHTML = `
+                        <div class="transaction-info">
+                            <div class="transaction-type ${typeInfo.class}">
+                                <i class="${typeInfo.icon}"></i>
+                                <span>${typeInfo.text}</span>
+                            </div>
+                            <div class="transaction-details">
+                                <div class="transaction-description">
+                                    ${transaction.description || 'بدون وصف'}
+                                    ${transaction.receiverName ? ` → ${transaction.receiverName}` : ''}
+                                    ${transaction.senderName ? ` ← ${transaction.senderName}` : ''}
+                                </div>
+                                <div class="transaction-meta">
+                                    <span><i class="far fa-clock"></i> ${new Date(transaction.timestamp).toLocaleDateString('ar-SA')}</span>
+                                    ${transaction.category ? `<span><i class="fas fa-tag"></i> ${transaction.category}</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="transaction-amount ${amountClass}">
+                            ${amountSign} ${transaction.amount.toFixed(2)} $
+                        </div>
+                    `;
+
+                    container.appendChild(div);
+                });
+            }
+
+            getTransactionTypeInfo(type) {
+                const types = {
+                    'deposit': { text: 'إيداع', class: 'type-deposit', icon: 'fas fa-arrow-down' },
+                    'withdraw': { text: 'سحب', class: 'type-withdraw', icon: 'fas fa-arrow-up' },
+                    'transfer_sent': { text: 'تحويل مرسل', class: 'type-transfer', icon: 'fas fa-paper-plane' },
+                    'transfer_received': { text: 'تحويل وارد', class: 'type-deposit', icon: 'fas fa-download' },
+                    'request': { text: 'طلب مال', class: 'type-request', icon: 'fas fa-hand-holding-usd' }
+                };
+                
+                return types[type] || { text: type, class: 'type-deposit', icon: 'fas fa-exchange-alt' };
+            }
+
+            updateDashboardStats() {
+                const today = new Date().toDateString();
+                let todayDeposits = 0;
+                let todayWithdrawals = 0;
+                let totalDeposits = 0;
+                let totalWithdrawals = 0;
+                let totalTransfers = 0;
+
+                this.transactions.forEach(transaction => {
+                    const transactionDate = new Date(transaction.timestamp).toDateString();
+                    
+                    if (transaction.type === 'deposit' || transaction.type === 'transfer_received') {
+                        totalDeposits += transaction.amount;
+                        if (transactionDate === today) {
+                            todayDeposits += transaction.amount;
+                        }
+                    } else if (transaction.type === 'withdraw') {
+                        totalWithdrawals += transaction.amount;
+                        if (transactionDate === today) {
+                            todayWithdrawals += transaction.amount;
+                        }
+                    } else if (transaction.type === 'transfer_sent') {
+                        totalTransfers += transaction.amount;
+                    }
+                });
+
+                document.getElementById('todayDeposits').textContent = 
+                    this.convertCurrency(todayDeposits, 'USD', this.currentCurrency).toFixed(2);
+                document.getElementById('todayWithdrawals').textContent = 
+                    this.convertCurrency(todayWithdrawals, 'USD', this.currentCurrency).toFixed(2);
+                
+                document.getElementById('sidebarDeposits').textContent = 
+                    this.convertCurrency(totalDeposits, 'USD', this.currentCurrency).toFixed(2) + ' $';
+                document.getElementById('sidebarWithdrawals').textContent = 
+                    this.convertCurrency(totalWithdrawals, 'USD', this.currentCurrency).toFixed(2) + ' $';
+                document.getElementById('sidebarTransfers').textContent = 
+                    this.convertCurrency(totalTransfers, 'USD', this.currentCurrency).toFixed(2) + ' $';
+            }
+
+            // ========== Contacts Management ==========
+            async loadContacts() {
+                try {
+                    const snapshot = await this.db.ref('contacts/' + this.currentUser.uid).once('value');
+                    
+                    this.contacts = [];
+                    if (snapshot.exists()) {
+                        snapshot.forEach((childSnapshot) => {
+                            this.contacts.push({
+                                id: childSnapshot.key,
+                                ...childSnapshot.val()
+                            });
+                        });
+                    }
+
+                    this.displayContacts();
+
+                } catch (error) {
+                    console.error('Error loading contacts:', error);
+                }
+            }
+
+            async addContact(userID) {
+                try {
+                    if (userID === this.userID) {
+                        throw new Error('لا يمكنك إضافة نفسك');
+                    }
+
+                    // البحث عن المستخدم باستخدام userID
+                    const userSnapshot = await this.db.ref('users')
+                        .orderByChild('userID')
+                        .equalTo(userID)
+                        .once('value');
+
+                    if (!userSnapshot.exists()) {
+                        throw new Error('المستخدم غير موجود');
+                    }
+
+                    const userData = Object.values(userSnapshot.val())[0];
+                    const userId = Object.keys(userSnapshot.val())[0];
+
+                    // التحقق إذا كان المستخدم مضافاً مسبقاً
+                    const existingContact = this.contacts.find(c => c.userID === userID);
+                    if (existingContact) {
+                        throw new Error('المستخدم مضاف مسبقاً');
+                    }
+
+                    // إضافة جهة الاتصال
+                    const contactData = {
+                        userID: userID,
+                        name: userData.name,
+                        email: userData.email,
+                        addedAt: new Date().toISOString()
+                    };
+
+                    await this.db.ref('contacts/' + this.currentUser.uid).push().set(contactData);
+                    
+                    // إعادة تحميل جهات الاتصال
+                    await this.loadContacts();
+                    
+                    this.showToast('تمت إضافة جهة الاتصال بنجاح', 'success');
+                    
+                    return contactData;
+
+                } catch (error) {
+                    console.error('Error adding contact:', error);
+                    this.showToast(error.message, 'error');
+                    throw error;
+                }
+            }
+
+            displayContacts() {
+                const container = document.getElementById('contactsList');
+                if (!container) return;
+                
+                container.innerHTML = '';
+
+                if (this.contacts.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: #95a5a6; width: 100%;">
+                            <i class="fas fa-users" style="font-size: 3rem; margin-bottom: 15px;"></i>
+                            <p>لا توجد جهات اتصال</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                this.contacts.forEach(contact => {
+                    const div = document.createElement('div');
+                    div.className = 'contact-card';
+                    
+                    div.innerHTML = `
+                        <div class="contact-header">
+                            <div class="contact-avatar">
+                                ${contact.name.charAt(0)}
+                            </div>
+                            <div class="contact-info">
+                                <h4>${contact.name}</h4>
+                                <p>${contact.email}</p>
+                                <small style="color: var(--gray);">${contact.userID}</small>
+                            </div>
+                        </div>
+                        <div class="contact-actions">
+                            <button class="btn btn-primary btn-sm transfer-to-contact" data-userid="${contact.userID}">
+                                <i class="fas fa-paper-plane"></i> تحويل
+                            </button>
+                            <button class="btn btn-light btn-sm view-contact" data-userid="${contact.userID}">
+                                <i class="fas fa-eye"></i> عرض
+                            </button>
+                        </div>
+                    `;
+
+                    container.appendChild(div);
+                });
+            }
+
+            // ========== Notifications Management ==========
+            async loadNotifications() {
+                try {
+                    const snapshot = await this.db.ref('notifications/' + this.currentUser.uid)
+                        .orderByChild('timestamp')
+                        .limitToLast(50)
+                        .once('value');
+                    
+                    this.notifications = [];
+                    let unreadCount = 0;
+                    
+                    if (snapshot.exists()) {
+                        snapshot.forEach((childSnapshot) => {
+                            const notification = {
+                                id: childSnapshot.key,
+                                ...childSnapshot.val()
+                            };
+                            this.notifications.unshift(notification);
+                            
+                            if (!notification.read) {
+                                unreadCount++;
+                            }
+                        });
+                    }
+
+                    // تحديث عداد الإشعارات
+                    document.getElementById('notificationBadge').textContent = unreadCount;
+                    
+                    // عرض الإشعارات إذا كانت الصفحة مفتوحة
+                    if (document.getElementById('notificationsPage').classList.contains('active')) {
+                        this.displayNotifications();
+                    }
+
+                } catch (error) {
+                    console.error('Error loading notifications:', error);
+                }
+            }
+
+            async createNotification(userId, type, title, message, data = {}) {
+                try {
+                    const notification = {
+                        type: type,
+                        title: title,
+                        message: message,
+                        data: data,
+                        timestamp: new Date().toISOString(),
+                        read: false
+                    };
+
+                    await this.db.ref('notifications/' + userId).push().set(notification);
+                    
+                    // تحديث الإشعارات للمستلم
+                    if (userId === this.currentUser.uid) {
+                        await this.loadNotifications();
+                    }
+
+                } catch (error) {
+                    console.error('Error creating notification:', error);
+                }
+            }
+
+            async markNotificationAsRead(notificationId) {
+                try {
+                    await this.db.ref(`notifications/${this.currentUser.uid}/${notificationId}`).update({
+                        read: true
+                    });
+                    
+                    await this.loadNotifications();
+                    
+                } catch (error) {
+                    console.error('Error marking notification as read:', error);
+                }
+            }
+
+            displayNotifications() {
+                const container = document.getElementById('notificationsList');
+                if (!container) return;
+                
+                container.innerHTML = '';
+
+                if (this.notifications.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: #95a5a6;">
+                            <i class="fas fa-bell-slash" style="font-size: 3rem; margin-bottom: 15px;"></i>
+                            <p>لا توجد إشعارات</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                this.notifications.forEach(notification => {
+                    const div = document.createElement('div');
+                    div.className = `notification-item ${notification.read ? '' : 'unread'}`;
+                    div.dataset.id = notification.id;
+                    
+                    const iconInfo = this.getNotificationIcon(notification.type);
+                    
+                    div.innerHTML = `
+                        <div class="notification-icon ${iconInfo.class}">
+                            <i class="${iconInfo.icon}"></i>
+                        </div>
+                        <div class="notification-content">
+                            <div class="notification-title">${notification.title}</div>
+                            <div class="notification-message">${notification.message}</div>
+                            <div class="notification-time">
+                                <i class="far fa-clock"></i>
+                                ${new Date(notification.timestamp).toLocaleDateString('ar-SA', {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })}
+                            </div>
+                        </div>
+                    `;
+                    
+                    div.addEventListener('click', () => {
+                        this.markNotificationAsRead(notification.id);
+                        div.classList.remove('unread');
+                    });
+
+                    container.appendChild(div);
+                });
+            }
+
+            getNotificationIcon(type) {
+                const icons = {
+                    'transfer_received': { class: 'success', icon: 'fas fa-money-bill-wave' },
+                    'transfer_sent': { class: 'info', icon: 'fas fa-paper-plane' },
+                    'deposit': { class: 'success', icon: 'fas fa-arrow-down' },
+                    'withdraw': { class: 'warning', icon: 'fas fa-arrow-up' },
+                    'system': { class: 'info', icon: 'fas fa-info-circle' },
+                    'warning': { class: 'warning', icon: 'fas fa-exclamation-triangle' },
+                    'error': { class: 'danger', icon: 'fas fa-exclamation-circle' }
+                };
+                
+                return icons[type] || { class: 'info', icon: 'fas fa-bell' };
+            }
+
+            // ========== UI Management ==========
+            showAuth() {
+                document.getElementById('authPage').style.display = 'flex';
+                document.getElementById('appContainer').style.display = 'none';
+                this.resetAuthForms();
+            }
+
+            showApp() {
+                document.getElementById('authPage').style.display = 'none';
+                document.getElementById('appContainer').style.display = 'block';
+                this.showPage('dashboard');
+            }
+
+            showPage(pageId) {
+                // إخفاء جميع الصفحات
+                document.querySelectorAll('.page').forEach(page => {
+                    page.style.display = 'none';
+                    page.classList.remove('active');
+                });
+
+                // إظهار الصفحة المطلوبة
+                const pageElement = document.getElementById(pageId + 'Page');
+                if (pageElement) {
+                    pageElement.style.display = 'block';
+                    pageElement.classList.add('active');
+                }
+
+                // تحديث القائمة الجانبية
+                document.querySelectorAll('.menu-link').forEach(link => {
+                    link.classList.remove('active');
+                    if (link.dataset.page === pageId) {
+                        link.classList.add('active');
+                    }
+                });
+
+                // إغلاق القائمة الجانبية على الموبايل
+                if (window.innerWidth <= 1200) {
+                    document.getElementById('sidebar').classList.remove('active');
+                }
+
+                // تحميل بيانات الصفحة إذا لزم الأمر
+                if (pageId === 'notifications') {
+                    this.displayNotifications();
+                }
+            }
+
+            showTransactionModal(type) {
+                const modal = document.getElementById('transactionModal');
+                const title = document.getElementById('modalTitle');
+                
+                if (type === 'deposit') {
+                    title.textContent = 'إيداع أموال';
+                } else if (type === 'withdraw') {
+                    title.textContent = 'سحب أموال';
+                } else if (type === 'request') {
+                    title.textContent = 'طلب مال';
+                }
+                
+                modal.style.display = 'flex';
+            }
+
+            showQRScanner() {
+                document.getElementById('qrScannerModal').style.display = 'flex';
+            }
+
+            // ========== Event Listeners ==========
+            setupEventListeners() {
+                // التحويل بين تبويبات المصادقة
+                document.getElementById('loginTab').addEventListener('click', () => this.switchAuthTab('login'));
+                document.getElementById('registerTab').addEventListener('click', () => this.switchAuthTab('register'));
+
+                // تسجيل الدخول
+                document.getElementById('loginForm').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const email = document.getElementById('loginEmail').value;
+                    const password = document.getElementById('loginPassword').value;
+                    
+                    if (!email || !password) {
+                        this.showToast('الرجاء ملء جميع الحقول', 'error');
+                        return;
+                    }
+                    
+                    await this.login(email, password);
+                });
+
+                // إنشاء حساب
+                document.getElementById('registerForm').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const name = document.getElementById('registerName').value;
+                    const email = document.getElementById('registerEmail').value;
+                    const password = document.getElementById('registerPassword').value;
+                    const phone = document.getElementById('registerPhone').value;
+                    
+                    if (!name || !email || !password) {
+                        this.showToast('الرجاء ملء جميع الحقول المطلوبة', 'error');
+                        return;
+                    }
+                    
+                    await this.register(email, password, name, phone);
+                });
+
+                // تسجيل الخروج
+                document.getElementById('logoutBtn').addEventListener('click', () => this.logout());
+
+                // القائمة الجانبية
+                document.getElementById('menuToggle').addEventListener('click', () => {
+                    document.getElementById('sidebar').classList.toggle('active');
+                });
+
+                // التنقل بين الصفحات
+                document.querySelectorAll('.menu-link').forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const page = link.dataset.page;
+                        this.showPage(page);
+                    });
+                });
+
+                // الإجراءات السريعة
+                document.querySelectorAll('.action-card').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const action = btn.dataset.action;
+                        
+                        if (action === 'deposit' || action === 'withdraw' || action === 'request') {
+                            this.showTransactionModal(action);
+                        } else if (action === 'transfer') {
+                            this.showPage('transfer');
+                        } else if (action === 'qr') {
+                            this.showQRScanner();
+                        } else if (action === 'bills') {
+                            this.showToast('قريباً...', 'info');
+                        }
+                    });
+                });
+
+                // نسخ المعرف
+                document.getElementById('copyUserIdBtn').addEventListener('click', () => {
+                    const userID = document.getElementById('userID').textContent;
+                    navigator.clipboard.writeText(userID).then(() => {
+                        this.showToast('تم نسخ المعرف', 'success');
+                    });
+                });
+
+                // التحويل بين المستخدمين
+                document.getElementById('sendTransferBtn').addEventListener('click', async () => {
+                    const receiverID = document.getElementById('receiverId').value;
+                    const amount = parseFloat(document.getElementById('transferAmount').value);
+                    const message = document.getElementById('transferMessage').value;
+                    const password = document.getElementById('transferPassword').value;
+                    
+                    if (!receiverID || !amount || amount <= 0 || !password) {
+                        this.showToast('الرجاء ملء جميع الحقول', 'error');
+                        return;
+                    }
+
+                    try {
+                        // التحقق من كلمة المرور
+                        const email = this.currentUser.email;
+                        await this.auth.signInWithEmailAndPassword(email, password);
+                        
+                        await this.makeTransaction('transfer', amount, message, 'transfer', receiverID);
+                        
+                        // مسح الحقول
+                        document.getElementById('receiverId').value = '';
+                        document.getElementById('transferAmount').value = '';
+                        document.getElementById('transferMessage').value = '';
+                        document.getElementById('transferPassword').value = '';
+                        
+                    } catch (error) {
+                        console.error('Transfer failed:', error);
+                        this.showToast('كلمة المرور غير صحيحة', 'error');
+                    }
+                });
+
+                // إضافة جهة اتصال
+                document.getElementById('addContactBtn').addEventListener('click', async () => {
+                    const userID = document.getElementById('newContactId').value;
+                    
+                    if (!userID) {
+                        this.showToast('الرجاء إدخال معرف المستخدم', 'error');
+                        return;
+                    }
+                    
+                    try {
+                        await this.addContact(userID);
+                        document.getElementById('newContactId').value = '';
+                    } catch (error) {
+                        console.error('Add contact failed:', error);
+                    }
+                });
+
+                // تغيير العملة
+                document.getElementById('currencySelector').addEventListener('change', (e) => {
+                    this.currentCurrency = e.target.value;
+                    this.updateBalanceDisplay();
+                    this.updateDashboardStats();
+                });
+
+                // تصفية المعاملات
+                document.getElementById('filterAll').addEventListener('click', () => this.filterTransactions('all'));
+                document.getElementById('filterDeposit').addEventListener('click', () => this.filterTransactions('deposit'));
+                document.getElementById('filterWithdraw').addEventListener('click', () => this.filterTransactions('withdraw'));
+                document.getElementById('filterTransfer').addEventListener('click', () => this.filterTransactions('transfer'));
+
+                // إغلاق المودالات
+                document.getElementById('closeModal').addEventListener('click', () => {
+                    document.getElementById('transactionModal').style.display = 'none';
+                });
+
+                document.getElementById('cancelTransaction').addEventListener('click', () => {
+                    document.getElementById('transactionModal').style.display = 'none';
+                });
+
+                document.getElementById('closeQrModal').addEventListener('click', () => {
+                    document.getElementById('qrScannerModal').style.display = 'none';
+                });
+
+                document.getElementById('cancelQRScan').addEventListener('click', () => {
+                    document.getElementById('qrScannerModal').style.display = 'none';
+                });
+
+                // تغيير كلمة المرور
+                document.getElementById('changePasswordBtn').addEventListener('click', async () => {
+                    const currentPassword = document.getElementById('currentPassword').value;
+                    const newPassword = document.getElementById('newPassword').value;
+                    const confirmPassword = document.getElementById('confirmPassword').value;
+                    
+                    if (!currentPassword || !newPassword || !confirmPassword) {
+                        this.showToast('الرجاء ملء جميع الحقول', 'error');
+                        return;
+                    }
+                    
+                    if (newPassword !== confirmPassword) {
+                        this.showToast('كلمات المرور غير متطابقة', 'error');
+                        return;
+                    }
+                    
+                    try {
+                        const email = this.currentUser.email;
+                        
+                        // إعادة المصادقة لتأكيد كلمة المرور الحالية
+                        await this.auth.signInWithEmailAndPassword(email, currentPassword);
+                        
+                        // تغيير كلمة المرور
+                        await this.currentUser.updatePassword(newPassword);
+                        
+                        this.showToast('تم تغيير كلمة المرور بنجاح', 'success');
+                        
+                        // مسح الحقول
+                        document.getElementById('currentPassword').value = '';
+                        document.getElementById('newPassword').value = '';
+                        document.getElementById('confirmPassword').value = '';
+                        
+                    } catch (error) {
+                        console.error('Error changing password:', error);
+                        this.showToast('كلمة المرور الحالية غير صحيحة', 'error');
+                    }
+                });
+
+                // تحديث الإعدادات
+                document.getElementById('emailNotifications').addEventListener('change', async (e) => {
+                    await this.updateSetting('emailNotifications', e.target.checked);
+                });
+
+                document.getElementById('transferNotifications').addEventListener('change', async (e) => {
+                    await this.updateSetting('transferNotifications', e.target.checked);
+                });
+
+                document.getElementById('defaultCurrencySetting').addEventListener('change', async (e) => {
+                    this.currentCurrency = e.target.value;
+                    await this.db.ref('users/' + this.currentUser.uid).update({
+                        currency: this.currentCurrency
+                    });
+                    
+                    if (this.userData) {
+                        this.userData.currency = this.currentCurrency;
+                    }
+                    
+                    this.updateBalanceDisplay();
+                    this.updateDashboardStats();
+                    this.showToast('تم تحديث العملة الافتراضية', 'success');
+                });
+
+                // إغلاق المودال عند النقر خارجها
+                window.addEventListener('click', (e) => {
+                    const modal = document.getElementById('transactionModal');
+                    const qrModal = document.getElementById('qrScannerModal');
+                    
+                    if (e.target === modal) {
+                        modal.style.display = 'none';
+                    }
+                    
+                    if (e.target === qrModal) {
+                        qrModal.style.display = 'none';
+                    }
+                });
+
+                // إغلاق القائمة الجانبية عند النقر خارجها
+                window.addEventListener('click', (e) => {
+                    const sidebar = document.getElementById('sidebar');
+                    const menuToggle = document.getElementById('menuToggle');
+                    
+                    if (window.innerWidth <= 1200 && sidebar && menuToggle && 
+                        !sidebar.contains(e.target) && 
+                        !menuToggle.contains(e.target) && 
+                        sidebar.classList.contains('active')) {
+                        sidebar.classList.remove('active');
+                    }
+                });
+
+                // معاملة الإيداع/السحب
+                document.getElementById('transactionForm').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    
+                    const amount = parseFloat(document.getElementById('transactionAmount').value);
+                    const description = document.getElementById('transactionDescription').value;
+                    const category = document.getElementById('transactionCategory').value;
+                    const type = document.getElementById('modalTitle').textContent.includes('إيداع') ? 'deposit' : 'withdraw';
+                    
+                    if (!amount || amount <= 0) {
+                        this.showToast('الرجاء إدخال مبلغ صحيح', 'error');
+                        return;
+                    }
+
+                    try {
+                        await this.makeTransaction(type, amount, description, category);
+                        document.getElementById('transactionModal').style.display = 'none';
+                        document.getElementById('transactionForm').reset();
+                        
+                    } catch (error) {
+                        console.error('Transaction failed:', error);
+                    }
+                });
+
+                // إشعارات
+                document.getElementById('notificationBtn').addEventListener('click', () => {
+                    this.showPage('notifications');
+                });
+            }
+
+            switchAuthTab(tab) {
+                document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+                
+                if (tab === 'login') {
+                    document.getElementById('loginTab').classList.add('active');
+                    document.getElementById('loginForm').classList.add('active');
+                } else {
+                    document.getElementById('registerTab').classList.add('active');
+                    document.getElementById('registerForm').classList.add('active');
+                }
+            }
+
+            resetAuthForms() {
+                document.getElementById('loginForm').reset();
+                document.getElementById('registerForm').reset();
+            }
+
+            filterTransactions(type) {
+                const container = document.getElementById('allTransactions');
+                if (!container) return;
+                
+                let filteredTransactions = this.transactions;
+                
+                if (type !== 'all') {
+                    filteredTransactions = this.transactions.filter(t => {
+                        if (type === 'deposit') {
+                            return t.type === 'deposit';
+                        } else if (type === 'withdraw') {
+                            return t.type === 'withdraw';
+                        } else if (type === 'transfer') {
+                            return t.type === 'transfer_sent' || t.type === 'transfer_received';
+                        }
+                        return true;
+                    });
+                }
+
+                this.displayTransactions(container, filteredTransactions);
+            }
+
+            async updateSetting(key, value) {
+                try {
+                    await this.db.ref(`users/${this.currentUser.uid}/settings/${key}`).set(value);
+                    
+                    if (this.userData.settings) {
+                        this.userData.settings[key] = value;
+                    }
+                    
+                    this.showToast('تم تحديث الإعدادات', 'success');
+                } catch (error) {
+                    console.error('Error updating setting:', error);
+                }
+            }
+
+            // ========== Utility Functions ==========
+            showTransactionSuccess(type, amount) {
+                const messages = {
+                    'deposit': `تم إيداع ${amount.toFixed(2)} $ بنجاح`,
+                    'withdraw': `تم سحب ${amount.toFixed(2)} $ بنجاح`,
+                    'transfer': `تم التحويل ${amount.toFixed(2)} $ بنجاح`,
+                    'request': `تم إرسال طلب ${amount.toFixed(2)} $ بنجاح`
+                };
+                
+                this.showToast(messages[type] || 'تمت المعاملة بنجاح', 'success');
+            }
+
+            showToast(message, type = 'info', title = '') {
+                const toastContainer = document.getElementById('toastContainer');
+                if (!toastContainer) return;
+                
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                
+                const icons = {
+                    'success': 'fa-check-circle',
+                    'error': 'fa-exclamation-circle',
+                    'warning': 'fa-exclamation-triangle',
+                    'info': 'fa-info-circle'
+                };
+                
+                const titles = {
+                    'success': 'نجاح',
+                    'error': 'خطأ',
+                    'warning': 'تحذير',
+                    'info': 'معلومة'
+                };
+                
+                toast.innerHTML = `
+                    <i class="fas ${icons[type]} toast-icon"></i>
+                    <div class="toast-content">
+                        <div class="toast-title">${title || titles[type]}</div>
+                        <div class="toast-message">${message}</div>
+                    </div>
+                    <button class="toast-close">&times;</button>
+                `;
+                
+                toastContainer.appendChild(toast);
+                
+                // زر الإغلاق
+                toast.querySelector('.toast-close').addEventListener('click', () => {
+                    toast.remove();
+                });
+                
+                // إزالة تلقائية بعد 5 ثواني
+                setTimeout(() => {
+                    toast.style.animation = 'slideInRight 0.3s ease reverse';
+                    setTimeout(() => {
+                        if (toast.parentNode) {
+                            toast.remove();
+                        }
+                    }, 300);
+                }, 5000);
+            }
+        }
+
+        // ========== Initialize Application ==========
+        window.addEventListener('DOMContentLoaded', () => {
+            window.wallet = new DigitalWalletPro();
+        });
+
+        // إضافة تنسيقات إضافية للـ Switch
+        const style = document.createElement('style');
+        style.textContent = `
+            .switch {
+                position: relative;
+                display: inline-block;
+                width: 60px;
+                height: 30px;
+            }
+            
+            .switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+            
+            .slider {
+                position: absolute;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: #ccc;
+                transition: .4s;
+                border-radius: 34px;
+            }
+            
+            .slider:before {
+                position: absolute;
+                content: "";
+                height: 22px;
+                width: 22px;
+                left: 4px;
+                bottom: 4px;
+                background-color: white;
+                transition: .4s;
+                border-radius: 50%;
+            }
+            
+            input:checked + .slider {
+                background-color: #4361ee;
+            }
+            
+            input:checked + .slider:before {
+                transform: translateX(30px);
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
